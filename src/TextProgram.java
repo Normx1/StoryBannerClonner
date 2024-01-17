@@ -2,27 +2,59 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TextProgram {
-    String pathOfFile;
+    String pathOfWritingFile;
+    String pathOfReadingFile;
+    String pathOfReplacementList;
 
 
-    public TextProgram(String pathOfFile) {
-        this.pathOfFile = pathOfFile;
+    public String getPathOfWritingFile() {
+        return pathOfWritingFile;
     }
+
+    public String getPathOfReadingFile() {
+        return pathOfReadingFile;
+    }
+
+    public String getPathOfReplacementList() {
+        return pathOfReplacementList;
+    }
+
+    public TextProgram(String pathOfWritingFile, String pathOfReadingFile, String pathOfReplacementList) {
+        this.pathOfWritingFile = pathOfWritingFile;
+        this.pathOfReadingFile = pathOfReadingFile;
+        this.pathOfReplacementList = pathOfReplacementList;
+    }
+
 
     ArrayList<String> readText(String pathOfFile) {
         ArrayList arrayList = new ArrayList();
+        Scanner scanner = null;
         try {
-            BufferedReader fileOutputStream = new BufferedReader(new FileReader(pathOfFile));
-            while (fileOutputStream.read() != -1) {
-                arrayList.add(fileOutputStream.readLine());
+            scanner = new Scanner(new File(pathOfFile));
+            while (scanner.hasNextLine()) {
+                arrayList.add(scanner.nextLine());
             }
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+
+//                try {
+
+//            BufferedReader fileOutputStream = new BufferedReader(new FileReader(pathOfFile));
+//            while (fileOutputStream.read() != -1) {
+//                arrayList.add(fileOutputStream.readLine());
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+        System.out.println("read text:" + arrayList);
         return arrayList;
     }
 
@@ -66,10 +98,30 @@ public class TextProgram {
 
     }
 
+    void createFinalString(ArrayList<ArrayList> arrayList) {
+        StringBuilder finalFile = new StringBuilder("[");
+        System.out.println("Beauty file");
+        for (int i = 0; i < arrayList.size(); i++) {
+            for (int j = 0; j < arrayList.get(i).size(); j++) {
+                finalFile.append((arrayList.get(i)).get(j));
+            }
+            if (i < arrayList.size() - 1) finalFile.append(",");
+        }
+        finalFile.append("]");
+         try {
+            PrintWriter fileWriter = new PrintWriter(new FileWriter("NewFile"));
+             fileWriter.write(finalFile.toString());
+            fileWriter.flush();
+        } catch (IOException exception) {
+            System.out.println(exception.getMessage());
+        }
+
+    }
+
     //Добавляет уникальный ScreenName
-    ArrayList<String> addUnicsScreenName(String screenName, String pathOfReadFile) {
+    ArrayList<String> addUnicsScreenName(String screenName) {
         System.out.println("Call method of Replacing ScreenName");
-        ArrayList<String> listOfStory = readText(pathOfReadFile);
+        ArrayList<String> listOfStory = readText(getPathOfReadingFile());
 
         for (int i = 0; i < listOfStory.size(); i++) {
             String s = listOfStory.get(i);
@@ -84,20 +136,19 @@ public class TextProgram {
     }
 
 
-    ArrayList<ArrayList> createNewStoryArray(String pathOfReadFile) {
+    ArrayList<ArrayList> createNewStoryArray() {
         ArrayList<ArrayList> newStoryArray = new ArrayList<>();
-        ArrayList<String> listOfScreenNames = readText("src/ListOfScreenNames");
-        listOfScreenNames.forEach(screenName -> {
-            newStoryArray.add(addUnicsId(addUnicsScreenName(screenName, pathOfReadFile)));
-        });
+        ArrayList<String> listOfScreenNames = readText(getPathOfReplacementList());
+        listOfScreenNames.forEach(screenName ->
+                newStoryArray.add(addUnicsId(addUnicsScreenName(screenName))));
         return newStoryArray;
     }
 
 
     //Печать массива в указанный файл
-    void printFile(ArrayList<ArrayList> list, String whereToWrite) {
+    void printFile(ArrayList<ArrayList> list) {
         try {
-            PrintWriter fileWriter = new PrintWriter(new FileOutputStream(whereToWrite));
+            PrintWriter fileWriter = new PrintWriter(new FileOutputStream(getPathOfWritingFile()));
 
             list.forEach(arrayList1 -> arrayList1.forEach(s -> {
                 fileWriter.write(s + "\n");
@@ -106,23 +157,27 @@ public class TextProgram {
         } catch (IOException exception) {
             System.out.println(exception.getMessage());
         }
-
     }
 
 
     public static void main(String[] args) {
 
-        String pathOfScreenName = "C:\\Users\\qa\\IdeaProjects\\ReWriteText\\src\\ListOfScreenNames";
-        String pathOfOneStory = "src/Story";
-        String pathOneBanner = "src/Banner";
-        TextProgram textProgram = new TextProgram(pathOfScreenName);
+        String pathOfReadingFile = "src/Story";
+        String pathOfReplacementList = "src/ListOfScreenNames";
+        String pathOfWritingFile = "src/ChangedFileStory";
 
-        ArrayList<ArrayList> storyArrayList = textProgram.createNewStoryArray(pathOfOneStory);
-        ArrayList<ArrayList> BannerArrayList = textProgram.createNewStoryArray(pathOneBanner);
 
-        textProgram.printFile(storyArrayList, "src/ChangedFileStory");
-        textProgram.printFile(BannerArrayList, "src/ChangedFileBanner");
+        TextProgram textProgram = new TextProgram(pathOfWritingFile, pathOfReadingFile, pathOfReplacementList);
 
+        ArrayList<ArrayList> storyArrayList = textProgram.createNewStoryArray();
+
+        textProgram.printFile(storyArrayList);
+
+
+        TextProgram textProgramBanner = new TextProgram("src/ChangedFileBanner", "src/banner", pathOfReplacementList);
+        textProgramBanner.printFile(textProgramBanner.createNewStoryArray());
+
+        textProgramBanner.createFinalString(storyArrayList);
 
 ////        ArrayList<String> arrayList = textProgram.readText(textProgram.getPathOfFile());
 ////        ArrayList<String> rewriteMassive = textProgram.rewriteInJson(arrayList);
